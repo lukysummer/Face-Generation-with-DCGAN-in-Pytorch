@@ -33,6 +33,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 def conv(in_channels, out_channels, kernel_size, stride = 2, padding = 1, batch_norm = True):
+    
     layers = []
     layers.append(nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias = False))
     if batch_norm:
@@ -48,22 +49,21 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.conv_dim = conv_dim
         
-        # input : 3, 32, 32
-        self.conv1 = conv(3, self.conv_dim, kernel_size = 4, batch_norm = False)     # _, 16, 16 
-        self.conv2 = conv(self.conv_dim, self.conv_dim*2, kernel_size = 4)     # _, 8, 8 
-        self.conv3 = conv(self.conv_dim*2, self.conv_dim*4, kernel_size = 4)     # _, 4, 4
+        self.conv1 = conv(3, self.conv_dim, kernel_size = 4, batch_norm = False) 
+        self.conv2 = conv(self.conv_dim, self.conv_dim*2, kernel_size = 4)    
+        self.conv3 = conv(self.conv_dim*2, self.conv_dim*4, kernel_size = 4)   
         
         self.fc = nn.Linear(self.conv_dim*4 * 4 * 4, 1)
         
 
     def forward(self, x):
-
-        x = F.leaky_relu(self.conv1(x))
-        x = F.leaky_relu(self.conv2(x))
-        x = F.leaky_relu(self.conv3(x))
+        #                   input image   :         (128, 3, 32, 32)
+        x = F.leaky_relu(self.conv1(x))           # (128, 32, 16, 16)
+        x = F.leaky_relu(self.conv2(x))           # (128, 64, 8, 8)
+        x = F.leaky_relu(self.conv3(x))           # (128, 128, 4, 4)
         
-        x = x.view(-1, self.conv_dim*4 * 4 * 4)
-        x = self.fc(x)
+        x = x.view(-1, self.conv_dim*4 * 4 * 4)   # (128, 1, 128*4*4)
+        x = self.fc(x)                            # (128, 1, 1)
         
         return x
     
@@ -72,6 +72,7 @@ class Discriminator(nn.Module):
 ######################### 3. DEFINE GENERATOR NETWORK #########################
 ###############################################################################
 def trans_conv(in_channels, out_channels, kernel_size, stride = 2, padding = 1, batch_norm = True):
+    
     layers = []
     layers.append(nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, bias = False))
     if batch_norm:
@@ -95,14 +96,14 @@ class Generator(nn.Module):
         self.deconv3 = trans_conv(self.conv_dim, 3, kernel_size = 4, batch_norm = False)    # 32, 32
         
         
-    def forward(self, x):     # returns: [32x32x3] Tensor image
-
-        x = self.fc(x)
-        x = x.view(-1, self.conv_dim*4, 4, 4)
+    def forward(self, x):     
+        #                               input z : (128, 100)
+        x = self.fc(x)                          # (128, 128*4*4)
+        x = x.view(-1, self.conv_dim*4, 4, 4)   # (128, 128, 4, 4)
         
-        x = F.relu(self.deconv1(x))
-        x = F.relu(self.deconv2(x))
-        x = F.tanh(self.deconv3(x))
+        x = F.relu(self.deconv1(x))             # (128, 64, 8, 8)
+        x = F.relu(self.deconv2(x))             # (128, 32, 16, 16)
+        x = F.tanh(self.deconv3(x))             # (128, 3, 32, 32)
         
         return x
     
@@ -168,17 +169,11 @@ def scale(x, feature_range=(-1, 1)):
 ####################### 7. DEFINE LOSSES & OPTIMIZERS #########################
 ###############################################################################
 def real_loss(D_out):
-    '''Calculates how close discriminator outputs are to being real.
-       param, D_out: discriminator logits
-       return: real loss'''
     loss = torch.mean((D_out - 0.9)**2)
     return loss
 
 
 def fake_loss(D_out):
-    '''Calculates how close discriminator outputs are to being fake.
-       param, D_out: discriminator logits
-       return: fake loss'''
     loss = torch.mean((D_out)**2)
     return loss
 
