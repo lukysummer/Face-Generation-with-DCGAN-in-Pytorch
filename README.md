@@ -15,7 +15,7 @@ Dircriminator to think that the generated image is REAL.
 ## Repository 
 
 This repository contains:
-* **Face_Generation.py** : Complete code for implementing facie generation task using DCGAN
+* **Face_Generation.py** : Complete code for implementing face generation task using DCGAN
 					  
 ## Datasets
 
