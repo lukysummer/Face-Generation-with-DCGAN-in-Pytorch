@@ -1,4 +1,4 @@
-# Face Keypoints Detection & Applying Snapchat Filters in PyTorch, CV2
+# Face Generation using DCGAN (Pytorch)
 
 This is my implementation of a face generation algorithm, which takes in a large number of face images and generates a new face image made from scratch
 from a **latent vector z (random uniform distribution in [0,1])**. Below are some examples of newly generated faces:
